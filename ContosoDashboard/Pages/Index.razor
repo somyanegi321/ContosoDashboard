@@ -28,6 +28,7 @@
                     </div>
                 </div>
             </div>
+            <div class="col-md-3 mb-3"><div class="card summary-card"><div class="card-body"><h5 class="card-title">Documents</h5><p class="card-text display-4 text-success">@summary.DocumentCount</p></div></div></div>
             <div class="col-md-3 mb-3">
                 <div class="card summary-card">
                     <div class="card-body">
@@ -53,6 +54,12 @@
                 </div>
             </div>
         </div>
+    }
+
+    @if (recentDocuments != null)
+    {
+        <section class="mb-4" aria-labelledby="recent-documents-heading"><div class="d-flex justify-content-between"><h3 id="recent-documents-heading">Recent Documents</h3><a href="/documents">View all</a></div>
+        @if (recentDocuments.Count == 0) { <p class="text-muted">No documents uploaded yet.</p> } else { <div class="list-group">@foreach (var document in recentDocuments) { <a class="list-group-item list-group-item-action" href="/documents/@document.DocumentId/download"><strong>@document.Title</strong><span class="ms-2 text-muted">@document.Category</span></a>}</div> }</section>
     }
 
     @if (announcements != null && announcements.Any())
@@ -124,6 +131,7 @@
     private DashboardSummary? summary;
     private List<Announcement>? announcements;
     private List<Notification>? recentNotifications;
+    private List<DocumentSummary>? recentDocuments;
     private string userName = "User";
     private int currentUserId = 0;
 
@@ -146,6 +154,7 @@
             summary = await DashboardService.GetDashboardSummaryAsync(currentUserId);
             announcements = await DashboardService.GetActiveAnnouncementsAsync();
             recentNotifications = await NotificationService.GetUserNotificationsAsync(currentUserId);
+            recentDocuments = await DashboardService.GetRecentDocumentsAsync(currentUserId);
         }
     }
 

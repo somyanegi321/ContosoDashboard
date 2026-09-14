@@ -1,0 +1,11 @@
+@page "/documents/shared"
+@attribute [Authorize]
+@inject IDocumentService DocumentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+
+<PageTitle>Shared With Me - ContosoDashboard</PageTitle>
+<div class="container-fluid document-page"><h1>Shared With Me</h1><p class="text-muted">Documents shared directly with your account.</p>
+@if (documents is null) { <p role="status">Loading shared documents...</p> } else if (documents.Count == 0) { <div class="alert alert-info">No documents have been shared with you.</div> } else { <div class="table-responsive"><table class="table"><thead><tr><th>Title</th><th>Category</th><th>Shared by</th><th>Uploaded</th><th></th></tr></thead><tbody>@foreach (var document in documents) { <tr @key="document.DocumentId"><td>@document.Title</td><td>@document.Category</td><td>@document.UploaderName</td><td>@document.UploadedAt.ToLocalTime().ToString("MMM dd, yyyy")</td><td><a class="btn btn-sm btn-outline-primary" href="/documents/@document.DocumentId/download" title="Download @document.Title"><span class="bi bi-download" aria-hidden="true"></span><span class="visually-hidden">Download</span></a></td></tr>}</tbody></table></div>}
+</div>
+@code { private List<DocumentSummary>? documents; protected override async Task OnInitializedAsync() { var state = await AuthenticationStateProvider.GetAuthenticationStateAsync(); if (int.TryParse(state.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) documents = await DocumentService.GetSharedDocumentsAsync(userId); } }

@@ -164,3 +164,35 @@ main {
 .content {
     padding-top: 1.1rem;
 }
+
+.document-page h1 {
+    letter-spacing: 0;
+}
+
+.document-search {
+    min-width: min(32rem, 100%);
+    flex: 1 1 20rem;
+}
+
+.document-filter {
+    flex: 0 1 16rem;
+}
+
+.document-page .card {
+    border-left: 4px solid #0078d4;
+}
+
+.document-page .table th {
+    white-space: nowrap;
+}
+
+@media (max-width: 640.98px) {
+    .document-page .table {
+        min-width: 680px;
+    }
+
+    .document-page .document-filter,
+    .document-page .document-search {
+        flex-basis: 100%;
+    }
+}

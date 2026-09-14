@@ -3,12 +3,17 @@ using ContosoDashboard.Data;
 using ContosoDashboard.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Options;
+using System.Security.Claims;
+using Microsoft.Data.Sqlite;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
+builder.Services.AddControllers();
+builder.Services.Configure<DocumentFeatureOptions>(builder.Configuration.GetSection(DocumentFeatureOptions.SectionName));
 
 // Add authentication state provider for Blazor
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
@@ -43,6 +48,10 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<IProjectService, ProjectService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+builder.Services.AddScoped<IMalwareScanner, FailClosedMalwareScanner>();
+builder.Services.AddScoped<DocumentAuthorizationService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 
 // Add HttpContextAccessor for accessing user claims
 builder.Services.AddHttpContextAccessor();
@@ -56,12 +65,37 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
+        var logger = services.GetRequiredService<ILogger<Program>>();
         context.Database.EnsureCreated(); // For development - use migrations in production
+
+        // EnsureCreated does not update an existing database when new entities are added.
+        // The training app can safely rebuild a stale local database so new document tables exist.
+        if (app.Environment.IsDevelopment() && !HasDocumentSchema(context))
+        {
+            logger.LogWarning("The local database predates document management. Recreating the development database.");
+            context.Database.EnsureDeleted();
+            context.Database.EnsureCreated();
+        }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
         logger.LogError(ex, "An error occurred creating the database.");
+    }
+}
+
+static bool HasDocumentSchema(ApplicationDbContext context)
+{
+    try
+    {
+        context.Database.ExecuteSqlRaw("SELECT 1 FROM \"Documents\" LIMIT 1");
+        context.Database.ExecuteSqlRaw("SELECT 1 FROM \"DocumentShares\" LIMIT 1");
+        context.Database.ExecuteSqlRaw("SELECT 1 FROM \"DocumentActivities\" LIMIT 1");
+        return true;
+    }
+    catch (SqliteException)
+    {
+        return false;
     }
 }
 
@@ -106,6 +140,19 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapBlazorHub();
+app.MapControllers();
+app.MapGet("/documents/{documentId:int}/download", async (int documentId, HttpContext httpContext, IDocumentService documents, CancellationToken cancellationToken) =>
+{
+    if (!int.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Results.Unauthorized();
+    var stream = await documents.OpenAuthorizedAsync(userId, documentId, false, cancellationToken);
+    return stream is null ? Results.NotFound() : Results.File(stream, "application/octet-stream", enableRangeProcessing: true);
+}).RequireAuthorization();
+app.MapGet("/documents/{documentId:int}/preview", async (int documentId, HttpContext httpContext, IDocumentService documents, CancellationToken cancellationToken) =>
+{
+    if (!int.TryParse(httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) return Results.Unauthorized();
+    var stream = await documents.OpenAuthorizedAsync(userId, documentId, true, cancellationToken);
+    return stream is null ? Results.NotFound() : Results.File(stream, "application/pdf");
+}).RequireAuthorization();
 app.MapFallbackToPage("/_Host");
 
 app.Run();

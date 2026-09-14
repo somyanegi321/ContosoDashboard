@@ -10,6 +10,8 @@ public interface INotificationService
     Task<Notification> CreateNotificationAsync(Notification notification);
     Task<bool> MarkAsReadAsync(int notificationId, int requestingUserId);
     Task<int> GetUnreadCountAsync(int userId);
+    Task NotifyDocumentSharedAsync(Document document, int recipientUserId, string actorName);
+    Task NotifyProjectDocumentAddedAsync(Document document, IEnumerable<int> recipientUserIds, string actorName);
 }
 
 public class NotificationService : INotificationService
@@ -68,5 +70,28 @@ public class NotificationService : INotificationService
     {
         return await _context.Notifications
             .CountAsync(n => n.UserId == userId && !n.IsRead);
+    }
+
+    public async Task NotifyDocumentSharedAsync(Document document, int recipientUserId, string actorName)
+    {
+        await CreateNotificationAsync(new Notification
+        {
+            UserId = recipientUserId,
+            Title = "Document shared with you",
+            Message = $"{actorName} shared '{document.Title}' with you.",
+            Type = NotificationType.DocumentShared
+        });
+    }
+
+    public async Task NotifyProjectDocumentAddedAsync(Document document, IEnumerable<int> recipientUserIds, string actorName)
+    {
+        foreach (var userId in recipientUserIds.Distinct())
+            await CreateNotificationAsync(new Notification
+            {
+                UserId = userId,
+                Title = "New project document",
+                Message = $"{actorName} added '{document.Title}' to your project.",
+                Type = NotificationType.ProjectDocumentAdded
+            });
     }
 }

@@ -1,73 +1,50 @@
-<!--
-Sync Impact Report
-- Version change: uninitialized scaffold -> 1.0.0
-- Modified principles: five scaffold placeholders replaced with project principles
-- Added sections: Project Constraints; Development Workflow
-- Removed sections: none
-- Follow-up TODOs: original ratification date is not recorded
--->
-
 # ContosoDashboard Constitution
+<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
 
 ## Core Principles
 
-### I. Training-First Scope
-ContosoDashboard MUST remain suitable for offline training and MUST NOT be presented as
-production-ready. Features MUST preserve the documented mock authentication, local operation,
-and educational simplicity unless a specification explicitly changes those constraints. This
-keeps exercises reproducible and prevents training code from being mistaken for a deployable
-production system.
+### I. Layered Offline Design
+<!-- Example: I. Library-First -->
+Core workflows remain usable offline and business behavior stays behind services and replaceable infrastructure abstractions.
+<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
 
-### II. Layered Design and Replaceable Infrastructure
-Business behavior MUST remain separated from persistence, authentication, storage, and other
-infrastructure through services and explicit abstractions where a migration path is documented.
-The default implementation MUST work offline with SQLite and local services. This preserves the
-training architecture and keeps a future cloud migration from requiring business-logic rewrites.
+### II. Authorization At Data Boundaries
+<!-- Example: II. CLI Interface -->
+Every query, mutation, and file retrieval enforces authorization in the service or endpoint boundary, never only in the UI.
+<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
 
-### III. Authorization at Every Data Boundary
-Protected pages MUST require authentication, and services MUST enforce authorization before
-returning or mutating user- or project-scoped data. Implementations MUST prevent insecure direct
-object references and MUST preserve user isolation. This defense-in-depth rule ensures that UI
-visibility is never the only access control.
+### III. Verifiable Behavior
+<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
+Feature work must have focused executable validation for security-sensitive and persistence behavior, with build validation before completion.
+<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
 
-### IV. Verifiable Behavior
-Every feature specification MUST define observable acceptance criteria. Changes MUST include
-focused tests or an executable verification step for the affected behavior, and MUST pass restore,
-build, and applicable tests before review. This makes instructional examples repeatable and
-keeps regressions visible.
+### IV. Accessible Workflows
+<!-- Example: IV. Integration Testing -->
+User-facing workflows provide readable labels and explicit loading, empty, success, and failure states across responsive layouts.
+<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
 
-### V. Simple, Accessible User Workflows
-User-facing changes MUST use the existing Blazor and Bootstrap conventions unless a specification
-justifies a change. Workflows MUST provide clear states for loading, empty, success, and failure,
-and MUST remain usable with keyboard navigation and readable labels. This keeps the dashboard
-teachable, predictable, and usable across its core scenarios.
+### V. Small, Traceable Changes
+<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
+Prefer the simplest implementation that satisfies the requirement, preserve existing public behavior, and record safe diagnostic activity for important operations.
+<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
 
-## Project Constraints
+## Additional Constraints
+<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
 
-The application MUST target the .NET SDK version required by the project file and MUST preserve
-package compatibility with that target. The default data store is SQLite, external services are
-not required for local operation, and mock authentication is for training only. Secrets MUST NOT
-be committed to source control. Security-sensitive changes MUST document their threat model and
-verification steps.
+Files remain outside `wwwroot`; document identifiers remain integer-backed; category values remain text; external services are optional for core training workflows.
+<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
 
 ## Development Workflow
+<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
 
-Work MUST proceed from a written feature specification to an implementation plan and ordered
-tasks. Reviews MUST check each applicable principle, acceptance criterion, authorization boundary,
-and verification result. A change is not complete until the project restores and builds cleanly
-apart from explicitly accepted warnings, and any known limitation is recorded in its documentation
-or review notes.
+Changes follow the active feature task order, preserve unrelated user changes, and are validated at phase boundaries.
+<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
 
 ## Governance
+<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-This constitution governs feature specifications, plans, tasks, implementation, and reviews for
-ContosoDashboard. Amendments MUST state the affected principles, rationale, compatibility impact,
-and required follow-up work. A constitution amendment MUST be reviewed before dependent feature
-artifacts are approved.
+The constitution is reviewed with feature plans and implementation validation. Feature-specific constraints may add requirements but may not weaken these principles.
+<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
 
-Versioning follows semantic versioning: MAJOR indicates incompatible governance changes, MINOR
-indicates a new or materially expanded principle or section, and PATCH indicates a clarification
-or non-semantic correction. Every review MUST verify compliance with all applicable MUST rules and
-MUST record any justified exception with an owner and expiry or removal condition.
-
-**Version**: 1.0.0 | **Ratified**: TODO(RATIFICATION_DATE): original adoption date is not recorded | **Last Amended**: 2026-09-14
+**Version**: 1.0.0 | **Ratified**: 2026-09-14 | **Last Amended**: 2026-09-14
+<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->

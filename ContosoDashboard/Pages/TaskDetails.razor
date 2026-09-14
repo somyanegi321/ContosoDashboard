@@ -1,0 +1,18 @@
+@page "/tasks/{TaskId:int}"
+@attribute [Authorize]
+@inject IDocumentService DocumentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ContosoDashboard.Data.ApplicationDbContext Db
+@inject NavigationManager NavigationManager
+@using System.Security.Claims
+
+<PageTitle>Task Documents - ContosoDashboard</PageTitle>
+<div class="container-fluid document-page"><a href="/tasks">Back to tasks</a><h1>Task @TaskId Documents</h1>
+<p><a class="btn btn-primary" href="/documents?taskId=@TaskId">Upload from this task</a></p>
+@if (availableDocuments is not null && availableDocuments.Count > 0)
+{
+	<div class="card mb-3"><div class="card-body"><label for="attach-document" class="form-label">Attach an existing document</label><div class="input-group"><select id="attach-document" class="form-select" @bind="selectedDocumentId"><option value="0">Choose a document</option>@foreach (var document in availableDocuments) { <option value="@document.DocumentId">@document.Title</option> }</select><button class="btn btn-outline-primary" @onclick="AttachDocument" disabled="@(selectedDocumentId == 0)">Attach</button></div></div></div>
+}
+@if (documents is null) { <p role="status">Loading related documents...</p> } else if (documents.Count == 0) { <p class="text-muted">No documents are attached to this task.</p> } else { <ul class="list-group">@foreach (var document in documents) { <li class="list-group-item d-flex justify-content-between"><span>@document.Title <small class="text-muted">@document.Category</small></span><a href="/documents/@document.DocumentId/download">Download</a></li>}</ul> }
+</div>
+@code { [Parameter] public int TaskId { get; set; } private List<DocumentSummary>? documents; private List<DocumentSummary>? availableDocuments; private int selectedDocumentId; private int currentUserId; private string? message; protected override async Task OnInitializedAsync() { var state = await AuthenticationStateProvider.GetAuthenticationStateAsync(); if (int.TryParse(state.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) { currentUserId = userId; documents = await DocumentService.GetTaskDocumentsAsync(userId, TaskId); availableDocuments = (await DocumentService.SearchAsync(userId, new DocumentQuery(PageSize: 500))).Items.Where(d => documents.All(attached => attached.DocumentId != d.DocumentId)).ToList(); } } private async Task AttachDocument() { if (selectedDocumentId == 0 || !await DocumentService.AttachToTaskAsync(currentUserId, selectedDocumentId, TaskId)) { message = "The document could not be attached."; return; } message = "Document attached."; documents = await DocumentService.GetTaskDocumentsAsync(currentUserId, TaskId); availableDocuments = availableDocuments?.Where(d => d.DocumentId != selectedDocumentId).ToList(); selectedDocumentId = 0; } }

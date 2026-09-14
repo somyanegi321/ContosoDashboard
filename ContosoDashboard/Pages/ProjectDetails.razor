@@ -7,6 +7,7 @@
 @inject IProjectService ProjectService
 @inject NavigationManager NavigationManager
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IDocumentService DocumentService
 
 <PageTitle>Project Details - ContosoDashboard</PageTitle>
 
@@ -151,6 +152,15 @@
                         }
                     </div>
                 </div>
+
+                <div class="card mt-4">
+                    <div class="card-header"><h5 class="mb-0">Project Documents</h5></div>
+                    <div class="card-body">
+                        @if (projectDocuments is null) { <p role="status">Loading documents...</p> }
+                        else if (projectDocuments.Count == 0) { <p class="text-muted">No project documents are available.</p> }
+                        else { <ul class="list-group">@foreach (var document in projectDocuments) { <li class="list-group-item d-flex justify-content-between"><span>@document.Title <small class="text-muted">@document.Category</small></span><a href="/documents/@document.DocumentId/download">Download</a></li>}</ul> }
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -237,6 +247,7 @@
     public int ProjectId { get; set; }
 
     private Project? project;
+    private List<DocumentSummary>? projectDocuments;
     private int currentUserId = 0;
 
     protected override async Task OnInitializedAsync()
@@ -253,6 +264,7 @@
         if (currentUserId > 0)
         {
             project = await ProjectService.GetProjectByIdAsync(ProjectId, currentUserId);
+            if (project != null) projectDocuments = await DocumentService.GetProjectDocumentsAsync(currentUserId, ProjectId);
         }
         
         if (project == null)

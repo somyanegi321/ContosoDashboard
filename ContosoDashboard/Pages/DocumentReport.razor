@@ -1,0 +1,12 @@
+@page "/admin/documents/report"
+@attribute [Authorize(Roles = "Administrator")]
+@inject IDocumentService DocumentService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using System.Security.Claims
+@using ContosoDashboard.Services
+
+<PageTitle>Document Report - ContosoDashboard</PageTitle>
+<div class="container-fluid document-page"><h1>Document Activity Report</h1>
+@if (report is null) { <p role="status">Loading report...</p> } else { <div class="row g-4"><div class="col-md-4"><h2 class="h5">File types</h2><ul>@foreach (var item in report.FileTypes) { <li>@item.Type: @item.Count</li> }</ul></div><div class="col-md-4"><h2 class="h5">Active uploaders</h2><ul>@foreach (var item in report.Uploaders) { <li>@item.User: @item.Count</li> }</ul></div><div class="col-md-4"><h2 class="h5">Access patterns</h2><ul>@foreach (var item in report.AccessPatterns) { <li>@item.Action: @item.Count</li> }</ul></div></div>}
+</div>
+@code { private AdminDocumentReport? report; protected override async Task OnInitializedAsync() { var state = await AuthenticationStateProvider.GetAuthenticationStateAsync(); if (int.TryParse(state.User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)) report = await DocumentService.GetActivityReportAsync(userId); } }
